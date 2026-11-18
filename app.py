@@ -58,7 +58,42 @@ init_db()
 
 def get_connection():
     return get_db_connection()
+def promote_initial_super_admin():
 
+    email = os.environ.get("INITIAL_SUPER_ADMIN_EMAIL")
+
+    if not email:
+        return
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            UPDATE users
+            SET role = 'super_admin',
+                region_id = NULL
+            WHERE LOWER(email) = LOWER(?)
+            """,
+            (email,)
+        )
+
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            app.logger.warning(
+                "Initial Super Admin email not found."
+            )
+        else:
+            app.logger.info(
+                "Initial Super Admin role updated."
+            )
+
+    finally:
+        connection.close()
+
+
+promote_initial_super_admin()
 
 def get_user_role():
     """
