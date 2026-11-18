@@ -498,6 +498,7 @@ def home():
 # CITIZEN REGISTRATION
 # =====================================================
 
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
@@ -506,24 +507,17 @@ def register():
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
-        confirm_password = request.form.get(
-            "confirm_password",
-            ""
-        )
+        confirm_password = request.form.get("confirm_password", "")
+        setup_key = request.form.get("setup_key", "")
 
         if not name or not email or not password:
 
-            flash(
-                "Please fill in all required fields.",
-                "danger"
-            )
-
+            flash("Please fill in all required fields.", "danger")
             return redirect(url_for("register"))
 
         if password != confirm_password:
 
             flash("Passwords do not match.", "danger")
-
             return redirect(url_for("register"))
 
         if len(password) < 8:
@@ -532,8 +526,29 @@ def register():
                 "Password must contain at least 8 characters.",
                 "danger"
             )
-
             return redirect(url_for("register"))
+
+        # Get initial Super Admin configuration
+        initial_admin_email = os.environ.get(
+            "INITIAL_SUPER_ADMIN_EMAIL", ""
+        ).strip().lower()
+
+        initial_admin_key = os.environ.get(
+            "INITIAL_SUPER_ADMIN_SETUP_KEY", ""
+        )
+
+        # Determine account role securely
+        if email == initial_admin_email:
+
+            if not initial_admin_key or setup_key != initial_admin_key:
+
+                flash("Invalid Super Admin setup key.", "danger")
+                return redirect(url_for("register"))
+
+            role = "super_admin"
+
+        else:
+            role = "citizen"
 
         connection = get_connection()
 
@@ -543,21 +558,31 @@ def register():
                 """
                 INSERT INTO users
                 (name, email, password_hash, role)
-                VALUES (?, ?, ?, 'citizen')
+                VALUES (?, ?, ?, ?)
                 """,
                 (
                     name,
                     email,
-                    generate_password_hash(password)
+                    generate_password_hash(password),
+                    role
                 )
             )
 
             connection.commit()
 
-            flash(
-                "Registration successful. Please login.",
-                "success"
-            )
+            if role == "super_admin":
+
+                flash(
+                    "Super Admin account created successfully. Please login.",
+                    "success"
+                )
+
+            else:
+
+                flash(
+                    "Registration successful. Please login.",
+                    "success"
+                )
 
             return redirect(url_for("login"))
 
@@ -572,7 +597,6 @@ def register():
             connection.close()
 
     return render_template("register.html")
-
 
 # =====================================================
 # LOGIN
