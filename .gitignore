@@ -1,0 +1,32 @@
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.venv/
+
+# Secrets
+.env
+
+# Local database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded user images
+uploads/*
+!uploads/.gitkeep
+
+# Dataset and temporary files
+dataset/
+.ipynb_checkpoints/
+
+# System files
+.DS_Store
+
+# Training datasets
+dataset/
+dataset_split/
+dataset_split.zip

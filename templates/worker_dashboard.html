@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Dashboard | CivicPulse</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: #172b4d;
+        }
+
+        .navbar-brand {
+            color: white;
+            font-weight: bold;
+        }
+
+        .page-title {
+            color: #172b4d;
+            font-weight: bold;
+        }
+
+        .report-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .report-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .Assigned { background: #fff3cd; color: #856404; }
+        .Accepted { background: #cfe2ff; color: #084298; }
+        .In-Progress { background: #d1e7dd; color: #0f5132; }
+        .Repair-Submitted { background: #e2d9f3; color: #432874; }
+        .Completed { background: #d1e7dd; color: #0f5132; }
+
+        .section-title {
+            color: #172b4d;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #1769aa;
+            border: none;
+        }
+
+        .btn-success {
+            background: #198754;
+        }
+
+        .empty-state {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="#">CivicPulse - Worker Panel</a>
+
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-white">
+                Welcome, {{ user_name }}
+            </span>
+
+            <form action="{{ url_for('logout') }}" method="POST">
+                <button class="btn btn-outline-light btn-sm" type="submit">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+    <h2 class="page-title mb-2">Worker Dashboard</h2>
+
+    <p class="text-muted">
+        View your assigned potholes and update repair progress.
+    </p>
+
+    <hr>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Assignment Count -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card report-card p-3">
+                <h6 class="text-muted">Total Assigned Tasks</h6>
+                <h2>{{ reports|length }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="section-title mb-3">My Assigned Potholes</h4>
+
+    {% if reports %}
+
+        {% for report in reports %}
+
+        <div class="card report-card">
+            <div class="card-body">
+
+                <div class="row">
+
+                    <!-- Pothole Image -->
+                    <div class="col-md-4 mb-3">
+
+                        <h6 class="fw-bold">Original Pothole Image</h6>
+
+                        {% if report['image_path'] %}
+                            <img
+                                src="{{ url_for(
+                                    'uploaded_file',
+                                    filename=report['image_path'].replace('uploads/', '')
+                                ) }}"
+                                class="report-image"
+                                alt="Pothole Image">
+                        {% else %}
+                            <p class="text-muted">No image available.</p>
+                        {% endif %}
+
+                    </div>
+
+                    <!-- Report Details -->
+                    <div class="col-md-8">
+
+                        <div class="d-flex justify-content-between flex-wrap">
+
+                            <h5 class="fw-bold">
+                                Report #{{ report['id'] }}
+                            </h5>
+
+                            <span class="status
+                                {{ report['assignment_status'].replace(' ', '-') }}">
+                                {{ report['assignment_status'] }}
+                            </span>
+
+                        </div>
+
+                        <p>
+                            <strong>City:</strong>
+                            {{ report['city_name'] or 'Not available' }}
+                        </p>
+
+                        <p>
+                            <strong>Description:</strong>
+                            {{ report['description'] }}
+                        </p>
+
+                        <p>
+                            <strong>Severity:</strong>
+                            {{ report['severity'] }}
+                        </p>
+
+                        <p>
+                            <strong>AI Prediction:</strong>
+                            {{ report['ai_prediction'] or 'Not available' }}
+                        </p>
+
+                        <p>
+                            <strong>AI Confidence:</strong>
+                            {% if report['ai_confidence'] is not none %}
+                                {{ "%.2f"|format(report['ai_confidence']) }}%
+                            {% else %}
+                                Not available
+                            {% endif %}
+                        </p>
+
+                        <p>
+                            <strong>Report Status:</strong>
+                            {{ report['status'] }}
+                        </p>
+
+                        <hr>
+
+                        <!-- Accept Assignment -->
+                        {% if report['assignment_status'] == 'Assigned' %}
+
+                            <form method="POST"
+                                  action="{{ url_for(
+                                      'accept_assignment',
+                                      report_id=report['id']
+                                  ) }}"
+                                  class="mb-2">
+
+                                <button class="btn btn-primary">
+                                    Accept Task
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                        <!-- Start Repair -->
+                        {% if report['assignment_status'] in ['Assigned', 'Accepted'] %}
+
+                            <form method="POST"
+                                  action="{{ url_for(
+                                      'start_repair',
+                                      report_id=report['id']
+                                  ) }}"
+                                  class="mb-3">
+
+                                <button class="btn btn-success">
+                                    Start Repair
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                        <!-- Repair Submission -->
+                        {% if report['assignment_status'] in ['In Progress', 'Accepted']
+                              or report['latest_repair_status'] == 'Rejected' %}
+
+                            <div class="card bg-light p-3 mt-3">
+
+                                <h6 class="fw-bold">
+                                    Submit After-Repair Details
+                                </h6>
+
+                                <p class="text-muted small">
+                                    Upload a clear image after completing the repair.
+                                </p>
+
+                                <form method="POST"
+                                      action="{{ url_for(
+                                          'submit_repair',
+                                          report_id=report['id']
+                                      ) }}"
+                                      enctype="multipart/form-data">
+
+                                    <div class="mb-3">
+
+                                        <label class="form-label">
+                                            After-Repair Image
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            name="repair_image"
+                                            class="form-control"
+                                            accept=".jpg,.jpeg,.png,.webp"
+                                            required>
+
+                                    </div>
+
+                                    <div class="mb-3">
+
+                                        <label class="form-label">
+                                            Repair Notes
+                                        </label>
+
+                                        <textarea
+                                            name="repair_notes"
+                                            class="form-control"
+                                            rows="3"
+                                            placeholder="Describe the repair work completed..."></textarea>
+
+                                    </div>
+
+                                    <button type="submit"
+                                            class="btn btn-success">
+                                        Submit Repair
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        {% endif %}
+
+                        <!-- Waiting for Approval -->
+                        {% if report['assignment_status'] == 'Repair Submitted' %}
+
+                            <div class="alert alert-info mt-3">
+                                Your repair image has been submitted.
+                                Waiting for Regional Admin approval.
+                            </div>
+
+                        {% endif %}
+
+                        <!-- Completed -->
+                        {% if report['assignment_status'] == 'Completed' %}
+
+                            <div class="alert alert-success mt-3">
+                                This repair has been approved and completed.
+                            </div>
+
+                        {% endif %}
+
+                        <!-- Latest Repair Image -->
+                        {% if report['latest_repair_image'] %}
+
+                            <hr>
+
+                            <h6 class="fw-bold">
+                                Latest After-Repair Image
+                            </h6>
+
+                            <img
+                                src="{{ url_for(
+                                    'uploaded_file',
+                                    filename=report['latest_repair_image'].replace('uploads/', '')
+                                ) }}"
+                                class="report-image"
+                                alt="After Repair Image"
+                                style="max-width: 350px;">
+
+                            <p class="mt-2">
+                                <strong>Repair Status:</strong>
+                                {{ report['latest_repair_status'] or 'Not available' }}
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty-state">
+            <h5>No Assigned Tasks</h5>
+            <p class="text-muted mb-0">
+                You don't have any assigned pothole reports yet.
+                Please wait for your Regional Admin to assign a task.
+            </p>
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

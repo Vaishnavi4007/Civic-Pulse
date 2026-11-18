@@ -1,0 +1,1560 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CivicPulse | Super Admin Dashboard</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+        body {
+            background: #f4f6f9;
+        }
+
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+            height: 100%;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .report-image {
+            width: 100px;
+            height: 75px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .table th {
+            white-space: nowrap;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .reports-table {
+            min-width: 1800px;
+            width: max-content;
+        }
+
+        .action-column {
+            min-width: 220px;
+            width: 220px;
+        }
+
+        .action-column form {
+            width: 100%;
+        }
+
+        .section-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .section-title {
+            font-weight: 700;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+        }
+
+        .management-table {
+            min-width: 650px;
+        }
+
+        .small-image {
+            width: 90px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 7px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================================================= -->
+<!-- NAVBAR -->
+<!-- ================================================= -->
+
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid px-4">
+
+        <a class="navbar-brand" href="/">
+            🏙️ CivicPulse
+        </a>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <span class="text-white">
+                Super Admin
+            </span>
+
+            <form method="POST" action="{{ url_for('logout') }}">
+                <button class="btn btn-outline-light btn-sm">
+                    Logout
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+</nav>
+
+
+<div class="container-fluid px-4 mt-4 mb-5">
+
+    <!-- ================================================= -->
+    <!-- WELCOME SECTION -->
+    <!-- ================================================= -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+
+        <div>
+            <h2>Welcome, {{ user_name }}!</h2>
+
+            <p class="text-muted">
+                Super Admin Dashboard – Global Monitoring and Management
+            </p>
+        </div>
+
+        <div>
+            <span class="badge bg-dark fs-6">
+                Super Admin
+            </span>
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- FLASH MESSAGES -->
+    <!-- ================================================= -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% for category, message in messages %}
+
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endwith %}
+
+
+    <!-- ================================================= -->
+    <!-- DASHBOARD STATISTICS -->
+    <!-- ================================================= -->
+
+    <h4 class="mt-4 mb-3 section-title">
+        Dashboard Overview
+    </h4>
+
+    <div class="row g-3">
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card">
+                <div class="card-body">
+
+                    <h6>Total Reports</h6>
+
+                    <div class="stat-number text-primary">
+                        {{ stats['total'] or 0 }}
+                    </div>
+
+                    <small class="text-muted">
+                        Reports from all regions
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card">
+                <div class="card-body">
+
+                    <h6>Pending Reports</h6>
+
+                    <div class="stat-number text-warning">
+                        {{ stats['pending'] or 0 }}
+                    </div>
+
+                    <small class="text-muted">
+                        Waiting for action
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card">
+                <div class="card-body">
+
+                    <h6>In Progress</h6>
+
+                    <div class="stat-number text-info">
+                        {{ stats['in_progress'] or 0 }}
+                    </div>
+
+                    <small class="text-muted">
+                        Repair work ongoing
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card">
+                <div class="card-body">
+
+                    <h6>Resolved Reports</h6>
+
+                    <div class="stat-number text-success">
+                        {{ stats['resolved'] or 0 }}
+                    </div>
+
+                    <small class="text-muted">
+                        Repairs approved
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- MAP BUTTON -->
+    <!-- ================================================= -->
+
+    <div class="mt-4 mb-4">
+
+        <a
+            href="{{ url_for('map_view') }}"
+            class="btn btn-success">
+
+            🗺️ View All Potholes on Map
+
+        </a>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- REGION MANAGEMENT -->
+    <!-- ================================================= -->
+
+    <div class="card section-card mt-4">
+
+        <div class="card-body">
+
+            <h4 class="section-title mb-3">
+                🌍 Region Management
+            </h4>
+
+            <p class="text-muted">
+                Monitor the cities currently registered in CivicPulse.
+            </p>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped management-table">
+
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Region ID</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Regional Admin ID</th>
+                            <th>Area Group Radius</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for region in regions %}
+
+                        <tr>
+
+                            <td>{{ region['id'] }}</td>
+
+                            <td>
+                                <strong>
+                                    {{ region['city_name'] }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ region['state_name'] }}
+                            </td>
+
+                            <td>
+                                {{ region['region_admin_id'] or 'Not Assigned' }}
+                            </td>
+
+                            <td>
+                                {{ region['area_group_radius'] or 2000 }} metres
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                No regions available.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- CREATE REGIONAL ADMIN / WORKER -->
+    <!-- ================================================= -->
+
+    <div class="card section-card mt-4">
+
+        <div class="card-body">
+
+            <h4 class="section-title mb-3">
+                👥 Create Regional Admin / Worker
+            </h4>
+
+            <p class="text-muted">
+                Create accounts and assign them to their respective cities.
+            </p>
+
+            <form
+                method="POST"
+                action="{{ url_for('create_user') }}">
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Full Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control"
+                            placeholder="Enter full name"
+                            required>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Email Address
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            placeholder="Enter email address"
+                            required>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            name="password"
+                            class="form-control"
+                            minlength="8"
+                            placeholder="Minimum 8 characters"
+                            required>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Account Role
+                        </label>
+
+                        <select
+                            name="role"
+                            class="form-select"
+                            required>
+
+                            <option value="">
+                                Select Role
+                            </option>
+
+                            <option value="regional_admin">
+                                Regional Admin
+                            </option>
+
+                            <option value="worker">
+                                Worker
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Assign City / Region
+                        </label>
+
+                        <select
+                            name="region_id"
+                            class="form-select"
+                            required>
+
+                            <option value="">
+                                Select City
+                            </option>
+
+                            {% for region in regions %}
+
+                            <option value="{{ region['id'] }}">
+
+                                {{ region['city_name'] }},
+                                {{ region['state_name'] }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-12">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary">
+
+                            + Create Account
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- REGIONAL ADMIN MANAGEMENT -->
+    <!-- ================================================= -->
+
+    <div class="card section-card mt-4">
+
+        <div class="card-body">
+
+            <h4 class="section-title mb-3">
+                🏢 Regional Admin Management
+            </h4>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped management-table">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Assigned City</th>
+                            <th>Change City</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for admin in regional_admins %}
+
+                        <tr>
+
+                            <td>{{ admin['id'] }}</td>
+
+                            <td>{{ admin['name'] }}</td>
+
+                            <td>{{ admin['email'] }}</td>
+
+                            <td>
+                                {{ admin['city_name'] or 'Not Assigned' }}
+                            </td>
+
+                            <td>
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('update_user_region', user_id=admin['id']) }}"
+                                    class="d-flex gap-2">
+
+                                    <select
+                                        name="region_id"
+                                        class="form-select form-select-sm"
+                                        required>
+
+                                        {% for region in regions %}
+
+                                        <option
+                                            value="{{ region['id'] }}"
+                                            {% if admin['region_id'] == region['id'] %}selected{% endif %}>
+
+                                            {{ region['city_name'] }}
+
+                                        </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-primary">
+
+                                        Update
+
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                No Regional Admin accounts created yet.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- WORKER MANAGEMENT -->
+    <!-- ================================================= -->
+
+    <div class="card section-card mt-4">
+
+        <div class="card-body">
+
+            <h4 class="section-title mb-3">
+                👷 Worker Management
+            </h4>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped management-table">
+
+                    <thead class="table-dark">
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Worker Name</th>
+                            <th>Email</th>
+                            <th>Assigned City</th>
+                            <th>Change City</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for worker in workers %}
+
+                        <tr>
+
+                            <td>{{ worker['id'] }}</td>
+
+                            <td>{{ worker['name'] }}</td>
+
+                            <td>{{ worker['email'] }}</td>
+
+                            <td>
+                                {{ worker['city_name'] or 'Not Assigned' }}
+                            </td>
+
+                            <td>
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('update_user_region', user_id=worker['id']) }}"
+                                    class="d-flex gap-2">
+
+                                    <select
+                                        name="region_id"
+                                        class="form-select form-select-sm"
+                                        required>
+
+                                        {% for region in regions %}
+
+                                        <option
+                                            value="{{ region['id'] }}"
+                                            {% if worker['region_id'] == region['id'] %}selected{% endif %}>
+
+                                            {{ region['city_name'] }}
+
+                                        </option>
+
+                                        {% endfor %}
+
+                                    </select>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-primary">
+
+                                        Update
+
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                No Worker accounts created yet.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- ALL POTHOLE REPORTS -->
+    <!-- ================================================= -->
+
+    <h4 class="section-title mt-5 mb-3">
+        📋 All Pothole Reports
+    </h4>
+
+
+    <!-- ================================================= -->
+    <!-- SEARCH AND FILTER -->
+    <!-- ================================================= -->
+
+    <div class="card section-card mb-3">
+
+        <div class="card-body">
+
+            <h5 class="mb-3">
+                Search & Filter Reports
+            </h5>
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+
+                    <input
+                        type="text"
+                        id="reportSearch"
+                        class="form-control"
+                        placeholder="Search by ID or description">
+
+                </div>
+
+
+                <div class="col-md-2">
+
+                    <select
+                        id="statusFilter"
+                        class="form-select">
+
+                        <option value="">
+                            All Statuses
+                        </option>
+
+                        <option value="Pending">
+                            Pending
+                        </option>
+
+                        <option value="In Progress">
+                            In Progress
+                        </option>
+
+                        <option value="Resolved">
+                            Resolved
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-2">
+
+                    <select
+                        id="aiFilter"
+                        class="form-select">
+
+                        <option value="">
+                            All AI Predictions
+                        </option>
+
+                        <option value="Pothole">
+                            Pothole
+                        </option>
+
+                        <option value="Normal Road">
+                            Normal Road
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-2">
+
+                    <select
+                        id="duplicateFilter"
+                        class="form-select">
+
+                        <option value="">
+                            All Reports
+                        </option>
+
+                        <option value="duplicate">
+                            Duplicates
+                        </option>
+
+                        <option value="original">
+                            Non-Duplicates
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <select
+                        id="regionFilter"
+                        class="form-select">
+
+                        <option value="">
+                            All Cities
+                        </option>
+
+                        {% for region in regions %}
+
+                        <option value="{{ region['city_name']|lower }}">
+
+                            {{ region['city_name'] }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- REPORT TABLE -->
+    <!-- ================================================= -->
+
+    {% if reports %}
+
+    <div class="table-responsive">
+
+        <table
+            class="table table-bordered table-striped bg-white reports-table"
+            id="reportsTable">
+
+            <thead class="table-dark">
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Citizen</th>
+
+                    <th>City</th>
+
+                    <th>Original Image</th>
+
+                    <th>Description</th>
+
+                    <th>Location</th>
+
+                    <th>Duplicate Detection</th>
+
+                    <th>Duplicate Count</th>
+
+                    <th>Severity</th>
+
+                    <th>AI Prediction</th>
+
+                    <th>AI Confidence</th>
+
+                    <th>Verification</th>
+
+                    <th>Priority Score</th>
+
+                    <th>Status</th>
+
+                    <th>Repair Image</th>
+
+                    <th>Repair Review</th>
+
+                    <th>Date</th>
+
+                    <th class="action-column">
+                        Status Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for report in reports %}
+
+                {% set duplicate_count = report['duplicate_count']|default(0, true)|int %}
+
+                <tr
+                    data-report-id="{{ report['id'] }}"
+                    data-description="{{ report['description']|lower }}"
+                    data-status="{{ report['status'] }}"
+                    data-ai="{{ report['ai_prediction'] or '' }}"
+                    data-region="{{ (report['city_name'] or '')|lower }}"
+                    data-duplicate="{% if duplicate_count > 0 or (report['duplicate_of_id'] and report['duplicate_status'] != 'Not a Duplicate') %}duplicate{% else %}original{% endif %}"
+                >
+
+                    <!-- REPORT ID -->
+
+                    <td>
+                        <strong>#{{ report['id'] }}</strong>
+                    </td>
+
+
+                    <!-- CITIZEN -->
+
+                    <td>
+                        {{ report['citizen_name'] }}
+                    </td>
+
+
+                    <!-- CITY -->
+
+                    <td>
+                        {{ report['city_name'] or 'Not Assigned' }}
+                    </td>
+
+
+                    <!-- ORIGINAL IMAGE -->
+
+                    <td>
+
+                        {% if report['image_path'] %}
+
+                            {% set image_file = report['image_path'].replace('uploads/', '', 1) %}
+
+                            <a
+                                href="{{ url_for('uploaded_file', filename=image_file) }}"
+                                target="_blank">
+
+                                <img
+                                    src="{{ url_for('uploaded_file', filename=image_file) }}"
+                                    class="report-image"
+                                    alt="Pothole Image">
+
+                            </a>
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                No Image
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <td>
+                        {{ report['description'] }}
+                    </td>
+
+
+                    <!-- LOCATION -->
+
+                    <td>
+
+                        {% if report['latitude'] is not none and report['longitude'] is not none %}
+
+                            {{ report['latitude'] }},
+                            {{ report['longitude'] }}
+
+                        {% else %}
+
+                            Not provided
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- DUPLICATE DETECTION -->
+
+                    <td>
+
+                        {% if report['duplicate_of_id'] %}
+
+                            {% if report['duplicate_status'] == 'Confirmed Duplicate' %}
+
+                                <span class="badge bg-success">
+                                    Confirmed Duplicate
+                                </span>
+
+                            {% elif report['duplicate_status'] == 'Not a Duplicate' %}
+
+                                <span class="badge bg-secondary">
+                                    Kept Separate
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Pending Review
+                                </span>
+
+                                <p class="small mt-2">
+                                    Linked to Report #{{ report['duplicate_of_id'] }}
+                                </p>
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('review_duplicate', report_id=report['id']) }}">
+
+                                    <button
+                                        type="submit"
+                                        name="decision"
+                                        value="Confirmed Duplicate"
+                                        class="btn btn-success btn-sm mb-1">
+
+                                        Mark Duplicate
+
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        name="decision"
+                                        value="Not a Duplicate"
+                                        class="btn btn-outline-primary btn-sm">
+
+                                        Keep Separate
+
+                                    </button>
+
+                                </form>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            <span class="badge bg-success">
+                                No Duplicate Detected
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- DUPLICATE COUNT -->
+
+                    <td>
+
+                        {% if duplicate_count > 0 %}
+
+                            <span class="badge bg-warning text-dark">
+                                {{ duplicate_count }} Duplicate(s)
+                            </span>
+
+                        {% else %}
+
+                            0
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- SEVERITY -->
+
+                    <td>
+
+                        {% if report['severity'] == 'High' %}
+
+                            <span class="badge bg-danger">
+                                High
+                            </span>
+
+                        {% elif report['severity'] == 'Medium' %}
+
+                            <span class="badge bg-warning text-dark">
+                                Medium
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-success">
+                                Low
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AI PREDICTION -->
+
+                    <td>
+
+                        {% if report['ai_prediction'] == 'Pothole' %}
+
+                            <span class="badge bg-danger">
+                                Pothole
+                            </span>
+
+                        {% elif report['ai_prediction'] == 'Normal Road' %}
+
+                            <span class="badge bg-success">
+                                Normal Road
+                            </span>
+
+                        {% else %}
+
+                            Not Available
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AI CONFIDENCE -->
+
+                    <td>
+
+                        {% if report['ai_confidence'] is not none %}
+
+                            {{ "%.2f"|format(report['ai_confidence']) }}%
+
+                        {% else %}
+
+                            Not Available
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- VERIFICATION -->
+
+                    <td>
+
+                        {% if report['verification_status'] == 'Confirmed Pothole' %}
+
+                            <span class="badge bg-success">
+                                Confirmed Pothole
+                            </span>
+
+                        {% elif report['verification_status'] == 'Not a Pothole' %}
+
+                            <span class="badge bg-danger">
+                                Not a Pothole
+                            </span>
+
+                        {% elif report['verification_status'] == 'Needs More Information' %}
+
+                            <span class="badge bg-info text-dark">
+                                Needs More Information
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-warning text-dark">
+                                Pending Review
+                            </span>
+
+                        {% endif %}
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('verify_report', report_id=report['id']) }}"
+                            class="mt-2">
+
+                            <select
+                                name="verification_status"
+                                class="form-select form-select-sm mb-2">
+
+                                <option
+                                    value="Confirmed Pothole"
+                                    {% if report['verification_status'] == 'Confirmed Pothole' %}selected{% endif %}>
+
+                                    Confirm Pothole
+
+                                </option>
+
+                                <option
+                                    value="Not a Pothole"
+                                    {% if report['verification_status'] == 'Not a Pothole' %}selected{% endif %}>
+
+                                    Not a Pothole
+
+                                </option>
+
+                                <option
+                                    value="Needs More Information"
+                                    {% if report['verification_status'] == 'Needs More Information' %}selected{% endif %}>
+
+                                    Needs More Information
+
+                                </option>
+
+                            </select>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success btn-sm">
+
+                                Verify
+
+                            </button>
+
+                        </form>
+
+                    </td>
+
+
+                    <!-- PRIORITY SCORE -->
+
+                    <td>
+
+                        {% set score = report['priority_score'] or 0 %}
+
+                        {% if score >= 70 %}
+
+                            <span class="badge bg-danger fs-6">
+                                {{ score|round|int }}
+                            </span>
+
+                            <div>
+                                <small>High Priority</small>
+                            </div>
+
+                        {% elif score >= 40 %}
+
+                            <span class="badge bg-warning text-dark fs-6">
+                                {{ score|round|int }}
+                            </span>
+
+                            <div>
+                                <small>Medium Priority</small>
+                            </div>
+
+                        {% else %}
+
+                            <span class="badge bg-success fs-6">
+                                {{ score|round|int }}
+                            </span>
+
+                            <div>
+                                <small>Low Priority</small>
+                            </div>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- REPORT STATUS -->
+
+                    <td>
+
+                        {% if report['status'] == 'Resolved' %}
+
+                            <span class="badge bg-success">
+                                Resolved
+                            </span>
+
+                        {% elif report['status'] == 'In Progress' %}
+
+                            <span class="badge bg-info text-dark">
+                                In Progress
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-warning text-dark">
+                                Pending
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- REPAIR IMAGE -->
+
+                    <td>
+
+                        {% if report['latest_repair_image'] %}
+
+                            {% set repair_file = report['latest_repair_image'].replace('uploads/', '', 1) %}
+
+                            <a
+                                href="{{ url_for('uploaded_file', filename=repair_file) }}"
+                                target="_blank">
+
+                                <img
+                                    src="{{ url_for('uploaded_file', filename=repair_file) }}"
+                                    class="small-image"
+                                    alt="After Repair Image">
+
+                            </a>
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                Not Uploaded
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- REPAIR REVIEW STATUS -->
+
+                    <td>
+
+                        {% if report['latest_repair_status'] == 'Repair Submitted' %}
+
+                            <span class="badge bg-warning text-dark">
+                                Waiting for Regional Admin
+                            </span>
+
+                        {% elif report['latest_repair_status'] == 'Approved' %}
+
+                            <span class="badge bg-success">
+                                Approved
+                            </span>
+
+                        {% elif report['latest_repair_status'] == 'Rejected' %}
+
+                            <span class="badge bg-danger">
+                                Rejected
+                            </span>
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                No Submission
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- DATE -->
+
+                    <td>
+                        {{ report['created_at'] }}
+                    </td>
+
+
+                    <!-- STATUS ACTION -->
+
+                    <td class="action-column">
+
+                        {% if report['status'] != 'Resolved' %}
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('update_report', report_id=report['id']) }}">
+
+                                <label class="form-label">
+                                    Update Status
+                                </label>
+
+                                <select
+                                    name="status"
+                                    class="form-select form-select-sm mb-2">
+
+                                    <option
+                                        value="Pending"
+                                        {% if report['status'] == 'Pending' %}selected{% endif %}>
+
+                                        Pending
+
+                                    </option>
+
+                                    <option
+                                        value="In Progress"
+                                        {% if report['status'] == 'In Progress' %}selected{% endif %}>
+
+                                        In Progress
+
+                                    </option>
+
+                                </select>
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary btn-sm w-100">
+
+                                    Update Status
+
+                                </button>
+
+                            </form>
+
+                        {% else %}
+
+                            <span class="badge bg-success">
+                                Repair Completed
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+        <div class="alert alert-info mt-3">
+            No pothole reports available yet.
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- BOOTSTRAP JAVASCRIPT -->
+<!-- ================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<!-- ================================================= -->
+<!-- SEARCH AND FILTER JAVASCRIPT -->
+<!-- ================================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("reportSearch");
+
+    const statusFilter = document.getElementById("statusFilter");
+
+    const aiFilter = document.getElementById("aiFilter");
+
+    const duplicateFilter = document.getElementById("duplicateFilter");
+
+    const regionFilter = document.getElementById("regionFilter");
+
+    const tableBody = document.querySelector("#reportsTable tbody");
+
+    if (!tableBody) {
+        return;
+    }
+
+    const rows = tableBody.querySelectorAll("tr");
+
+    function filterReports() {
+
+        const searchValue = searchInput.value.toLowerCase().trim();
+
+        const selectedStatus = statusFilter.value;
+
+        const selectedAI = aiFilter.value;
+
+        const selectedDuplicate = duplicateFilter.value;
+
+        const selectedRegion = regionFilter.value;
+
+        rows.forEach(function (row) {
+
+            const reportId = row.dataset.reportId || "";
+
+            const description = row.dataset.description || "";
+
+            const status = row.dataset.status || "";
+
+            const ai = row.dataset.ai || "";
+
+            const duplicate = row.dataset.duplicate || "";
+
+            const region = row.dataset.region || "";
+
+            const matchesSearch =
+                reportId.includes(searchValue) ||
+                description.includes(searchValue);
+
+            const matchesStatus =
+                !selectedStatus || status === selectedStatus;
+
+            const matchesAI =
+                !selectedAI || ai === selectedAI;
+
+            const matchesDuplicate =
+                !selectedDuplicate ||
+                duplicate === selectedDuplicate;
+
+            const matchesRegion =
+                !selectedRegion || region === selectedRegion;
+
+            row.style.display =
+                matchesSearch &&
+                matchesStatus &&
+                matchesAI &&
+                matchesDuplicate &&
+                matchesRegion
+                    ? ""
+                    : "none";
+
+        });
+
+    }
+
+    searchInput.addEventListener("input", filterReports);
+
+    statusFilter.addEventListener("change", filterReports);
+
+    aiFilter.addEventListener("change", filterReports);
+
+    duplicateFilter.addEventListener("change", filterReports);
+
+    regionFilter.addEventListener("change", filterReports);
+
+});
+
+</script>
+
+</body>
+</html>
