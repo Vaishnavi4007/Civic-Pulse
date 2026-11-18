@@ -88,6 +88,7 @@ def promote_initial_super_admin():
             app.logger.info(
                 "Initial Super Admin role updated."
             )
+            app.logger.info(f"Super Admin assigned to: {email}")
 
     finally:
         connection.close()
