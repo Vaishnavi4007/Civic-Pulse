@@ -23,7 +23,7 @@ from werkzeug.security import (
 )
 
 from database import get_db_connection, init_db
-#from ai_model.predict import predict_pothole
+from ai_model.predict import predict_pothole
 
 
 # =====================================================
@@ -823,8 +823,7 @@ def report():
         image.save(image_path)
 
         # CNN prediction
-        ai_prediction = "Pending AI Analysis"
-        ai_confidence = 0.0
+        ai_prediction, ai_confidence = predict_pothole(image_path)
 
         verification_status = "Pending Review"
 
