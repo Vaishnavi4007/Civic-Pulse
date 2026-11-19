@@ -654,6 +654,7 @@ def login():
     return render_template("login.html")
 
 
+
 # =====================================================
 # CITIZEN: SUBMIT POTHOLE REPORT
 # =====================================================
@@ -688,99 +689,76 @@ def report():
     try:
 
         description = request.form.get(
-            "description",
-            ""
+            "description", ""
         ).strip()
 
         severity = request.form.get(
-            "severity",
-            "Medium"
+            "severity", "Medium"
         )
 
         region_id_text = request.form.get(
-            "region_id",
-            ""
+            "region_id", ""
         ).strip()
 
         image = request.files.get("image")
 
         latitude_text = request.form.get(
-            "latitude",
-            ""
+            "latitude", ""
         ).strip()
 
         longitude_text = request.form.get(
-            "longitude",
-            ""
+            "longitude", ""
         ).strip()
 
         if not description or not image or not image.filename:
-
             flash(
                 "Please provide a description and image.",
                 "danger"
             )
-
             return redirect(url_for("report"))
 
         if severity not in ["Low", "Medium", "High"]:
-
             flash("Invalid severity level.", "danger")
-
             return redirect(url_for("report"))
 
         if not region_id_text:
-
             flash(
                 "Please select your city or region.",
                 "warning"
             )
-
             return redirect(url_for("report"))
 
         try:
             region_id = int(region_id_text)
         except ValueError:
-
             flash("Invalid region selected.", "danger")
-
             return redirect(url_for("report"))
 
         region = connection.execute(
-            """
-            SELECT id
-            FROM regions
-            WHERE id = ?
-            """,
+            "SELECT id FROM regions WHERE id = ?",
             (region_id,)
         ).fetchone()
 
         if not region:
-
             flash("Selected region does not exist.", "danger")
-
             return redirect(url_for("report"))
 
         filename = secure_filename(image.filename)
 
         if "." not in filename:
-
             flash("Invalid image filename.", "danger")
-
             return redirect(url_for("report"))
 
         extension = filename.rsplit(".", 1)[1].lower()
 
         if extension not in ALLOWED_EXTENSIONS:
-
             flash(
                 "Only JPG, JPEG, PNG and WEBP images are allowed.",
                 "danger"
             )
-
             return redirect(url_for("report"))
-        try:
 
+        try:
             if not latitude_text or not longitude_text:
                 raise ValueError
 
@@ -800,12 +778,10 @@ def report():
                 raise ValueError
 
         except ValueError:
-
             flash(
                 "Please provide valid GPS coordinates.",
                 "danger"
             )
-
             return redirect(url_for("report"))
 
         filename = f"{uuid.uuid4().hex}.{extension}"
@@ -823,7 +799,15 @@ def report():
         image.save(image_path)
 
         # CNN prediction
-        ai_prediction, ai_confidence = predict_pothole(image_path)
+        print("DEBUG: Starting AI prediction", flush=True)
+
+        ai_prediction, ai_confidence = predict_pothole(
+            image_path
+        )
+
+        print("DEBUG: AI prediction completed", flush=True)
+        print("DEBUG: Prediction:", ai_prediction, flush=True)
+        print("DEBUG: Confidence:", ai_confidence, flush=True)
 
         verification_status = "Pending Review"
 
@@ -899,14 +883,11 @@ def report():
         connection.commit()
 
         if duplicate_report_id:
-
             flash(
                 f"Possible duplicate detected. Linked to Report #{duplicate_report_id}.",
                 "warning"
             )
-
         else:
-
             flash(
                 "Pothole report submitted successfully!",
                 "success"
@@ -932,6 +913,7 @@ def report():
 
     finally:
         connection.close()
+
         # =====================================================
 # SHARED REPORT QUERY
 # =====================================================
