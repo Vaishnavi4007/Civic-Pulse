@@ -43,6 +43,15 @@
             border-radius: 8px;
         }
 
+        .image-section {
+            height: 100%;
+        }
+
+        .image-section h6 {
+            color: #172b4d;
+            margin-bottom: 12px;
+        }
+
         .status {
             padding: 6px 12px;
             border-radius: 20px;
@@ -76,6 +85,26 @@
             padding: 40px;
             border-radius: 12px;
             text-align: center;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 220px;
+            background: #e9ecef;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            text-align: center;
+            padding: 10px;
+        }
+
+        @media (max-width: 991px) {
+            .report-image,
+            .no-image {
+                height: 200px;
+            }
         }
     </style>
 </head>
@@ -142,33 +171,39 @@
         <div class="card report-card">
             <div class="card-body">
 
-                <div class="row">
+                <div class="row align-items-start">
 
-                    <!-- Pothole Image -->
-                    <div class="col-md-4 mb-3">
+                    <!-- BEFORE REPAIR IMAGE -->
+                    <div class="col-lg-3 col-md-4 mb-3">
+                        <div class="image-section">
 
-                        <h6 class="fw-bold">Original Pothole Image</h6>
+                            <h6 class="fw-bold">
+                                Before Repair Image
+                            </h6>
 
-                        {% if report['image_path'] %}
-                            <img
-                                src="{{ url_for(
-                                    'uploaded_file',
-                                    filename=report['image_path'].replace('uploads/', '')
-                                ) }}"
-                                class="report-image"
-                                alt="Pothole Image">
-                        {% else %}
-                            <p class="text-muted">No image available.</p>
-                        {% endif %}
+                            {% if report['image_path'] %}
+                                <img
+                                    src="{{ url_for(
+                                        'uploaded_file',
+                                        filename=report['image_path'].replace('uploads/', '')
+                                    ) }}"
+                                    class="report-image"
+                                    alt="Original Pothole Image">
+                            {% else %}
+                                <div class="no-image">
+                                    No original image available.
+                                </div>
+                            {% endif %}
 
+                        </div>
                     </div>
 
-                    <!-- Report Details -->
-                    <div class="col-md-8">
+                    <!-- REPORT CONTENT -->
+                    <div class="col-lg-6 col-md-8 mb-3">
 
-                        <div class="d-flex justify-content-between flex-wrap">
+                        <div class="d-flex justify-content-between flex-wrap align-items-center mb-3">
 
-                            <h5 class="fw-bold">
+                            <h5 class="fw-bold mb-2">
                                 Report #{{ report['id'] }}
                             </h5>
 
@@ -331,30 +366,41 @@
 
                         {% endif %}
 
-                        <!-- Latest Repair Image -->
-                        {% if report['latest_repair_image'] %}
+                    </div>
 
-                            <hr>
+                    <!-- AFTER REPAIR IMAGE -->
+                    <div class="col-lg-3 col-md-12 mb-3">
+
+                        <div class="image-section">
 
                             <h6 class="fw-bold">
-                                Latest After-Repair Image
+                                After Repair Image
                             </h6>
 
-                            <img
-                                src="{{ url_for(
-                                    'uploaded_file',
-                                    filename=report['latest_repair_image'].replace('uploads/', '')
-                                ) }}"
-                                class="report-image"
-                                alt="After Repair Image"
-                                style="max-width: 350px;">
+                            {% if report['latest_repair_image'] %}
 
-                            <p class="mt-2">
-                                <strong>Repair Status:</strong>
-                                {{ report['latest_repair_status'] or 'Not available' }}
-                            </p>
+                                <img
+                                    src="{{ url_for(
+                                        'uploaded_file',
+                                        filename=report['latest_repair_image'].replace('uploads/', '')
+                                    ) }}"
+                                    class="report-image"
+                                    alt="After Repair Image">
 
-                        {% endif %}
+                                <p class="mt-2">
+                                    <strong>Repair Status:</strong>
+                                    {{ report['latest_repair_status'] or 'Not available' }}
+                                </p>
+
+                            {% else %}
+
+                                <div class="no-image">
+                                    After-repair image not uploaded yet.
+                                </div>
+
+                            {% endif %}
+
+                        </div>
 
                     </div>
 

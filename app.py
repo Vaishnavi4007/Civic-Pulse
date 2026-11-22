@@ -1037,20 +1037,6 @@ def super_admin_dashboard():
             """
         ).fetchall()
 
-        workers = connection.execute(
-            """
-            SELECT
-                users.id,
-                users.name,
-                users.email,
-                users.region_id,
-                regions.city_name
-            FROM users
-            LEFT JOIN regions ON users.region_id = regions.id
-            WHERE users.role = 'worker'
-            """
-        ).fetchall()
-
     finally:
         connection.close()
 
@@ -1060,7 +1046,6 @@ def super_admin_dashboard():
         stats=stats,
         regions=regions,
         regional_admins=regional_admins,
-        workers=workers,
         user_name=session["name"],
         user_role="super_admin"
     )
@@ -1336,7 +1321,7 @@ def map_view():
 
 
 # =====================================================
-# SUPER ADMIN: CREATE REGIONAL ADMIN OR WORKER
+# SUPER ADMIN: CREATE REGIONAL ADMIN ONLY
 # =====================================================
 
 @app.route("/create-user", methods=["POST"])
@@ -1346,87 +1331,75 @@ def create_user():
     name = request.form.get("name", "").strip()
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
-    role = request.form.get("role", "").strip()
     region_id_text = request.form.get("region_id", "").strip()
 
-    if not name or not email or not password:
-
-        flash(
-            "Please fill in all user details.",
-            "danger"
-        )
-
+    if not name or not email or not password or not region_id_text:
+        flash("Please fill in all Regional Admin details.", "danger")
         return redirect(url_for("super_admin_dashboard"))
 
     if len(password) < 8:
-
-        flash(
-            "Password must contain at least 8 characters.",
-            "danger"
-        )
-
-        return redirect(url_for("super_admin_dashboard"))
-
-    if role not in ["regional_admin", "worker"]:
-
-        flash(
-            "Only Regional Admin and Worker accounts can be created here.",
-            "danger"
-        )
-
+        flash("Password must contain at least 8 characters.", "danger")
         return redirect(url_for("super_admin_dashboard"))
 
     try:
         region_id = int(region_id_text)
     except ValueError:
-
         flash("Please select a valid region.", "danger")
-
         return redirect(url_for("super_admin_dashboard"))
 
     connection = get_connection()
 
     try:
-
         region = connection.execute(
-            "SELECT id FROM regions WHERE id = ?",
+            "SELECT id, region_admin_id FROM regions WHERE id = ?",
             (region_id,)
         ).fetchone()
 
         if not region:
-
             flash("Selected region does not exist.", "danger")
-
             return redirect(url_for("super_admin_dashboard"))
 
-        connection.execute(
+        if region["region_admin_id"] is not None:
+            flash(
+                "This region already has a Regional Admin assigned.",
+                "warning"
+            )
+            return redirect(url_for("super_admin_dashboard"))
+
+        cursor = connection.execute(
             """
             INSERT INTO users
             (name, email, password_hash, role, region_id)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, 'regional_admin', ?)
             """,
             (
                 name,
                 email,
                 generate_password_hash(password),
-                role,
                 region_id
             )
+        )
+
+        regional_admin_id = cursor.lastrowid
+
+        connection.execute(
+            """
+            UPDATE regions
+            SET region_admin_id = ?
+            WHERE id = ?
+            """,
+            (regional_admin_id, region_id)
         )
 
         connection.commit()
 
         flash(
-            f"{role.replace('_', ' ').title()} account created successfully.",
+            "Regional Admin account created successfully.",
             "success"
         )
 
     except sqlite3.IntegrityError:
-
-        flash(
-            "This email is already registered.",
-            "danger"
-        )
+        flash("This email is already registered.", "danger")
 
     finally:
         connection.close()
@@ -1435,7 +1408,71 @@ def create_user():
 
 
 # =====================================================
-# SUPER ADMIN: UPDATE USER REGION
+# REGIONAL ADMIN: CREATE WORKER IN OWN REGION ONLY
+# =====================================================
+
+@app.route("/create-worker", methods=["POST"])
+@regional_admin_required
+def create_worker():
+
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+    region_id = get_user_region_id()
+
+    if not name or not email or not password:
+        flash("Please fill in all Worker details.", "danger")
+        return redirect(url_for("regional_admin_dashboard"))
+
+    if len(password) < 8:
+        flash("Password must contain at least 8 characters.", "danger")
+        return redirect(url_for("regional_admin_dashboard"))
+
+    if not region_id:
+        flash("Your account is not assigned to a region.", "danger")
+        return redirect(url_for("regional_admin_dashboard"))
+
+    connection = get_connection()
+
+    try:
+        region = connection.execute(
+            "SELECT id FROM regions WHERE id = ?",
+            (region_id,)
+        ).fetchone()
+
+        if not region:
+            flash("Your assigned region was not found.", "danger")
+            return redirect(url_for("regional_admin_dashboard"))
+
+        connection.execute(
+            """
+            INSERT INTO users
+            (name, email, password_hash, role, region_id)
+            VALUES (?, ?, ?, 'worker', ?)
+            """,
+            (
+                name,
+                email,
+                generate_password_hash(password),
+                region_id
+            )
+        )
+
+        connection.commit()
+
+        flash("Worker account created successfully.", "success")
+
+    except sqlite3.IntegrityError:
+        flash("This email is already registered.", "danger")
+
+    finally:
+        connection.close()
+
+    return redirect(url_for("regional_admin_dashboard"))
+
+
+# =====================================================
+# SUPER ADMIN: UPDATE REGIONAL ADMIN REGION ONLY
 # =====================================================
 
 @app.route(
@@ -1446,22 +1483,17 @@ def create_user():
 def update_user_region(user_id):
 
     try:
-        region_id = int(
-            request.form.get("region_id", "")
-        )
+        region_id = int(request.form.get("region_id", ""))
     except ValueError:
-
         flash("Invalid region selected.", "danger")
-
         return redirect(url_for("super_admin_dashboard"))
 
     connection = get_connection()
 
     try:
-
         user = connection.execute(
             """
-            SELECT id, role
+            SELECT id, role, region_id
             FROM users
             WHERE id = ?
             """,
@@ -1469,28 +1501,42 @@ def update_user_region(user_id):
         ).fetchone()
 
         region = connection.execute(
-            """
-            SELECT id
-            FROM regions
-            WHERE id = ?
-            """,
+            "SELECT id, region_admin_id FROM regions WHERE id = ?",
             (region_id,)
         ).fetchone()
 
-        if not user or user["role"] not in [
-            "regional_admin",
-            "worker"
-        ]:
-
-            flash("User not found or cannot be updated.", "danger")
-
+        # Super Admin is allowed to change only Regional Admin regions.
+        if not user or user["role"] != "regional_admin":
+            flash(
+                "Only Regional Admin accounts can be updated here.",
+                "danger"
+            )
             return redirect(url_for("super_admin_dashboard"))
 
         if not region:
-
             flash("Region not found.", "danger")
-
             return redirect(url_for("super_admin_dashboard"))
+
+        if (
+            region["region_admin_id"] is not None
+            and region["region_admin_id"] != user_id
+        ):
+            flash(
+                "This region is already assigned to another Regional Admin.",
+                "warning"
+            )
+            return redirect(url_for("super_admin_dashboard"))
+
+        # Remove the old region-to-admin link if this admin is moving.
+        if user["region_id"] is not None:
+            connection.execute(
+                """
+                UPDATE regions
+                SET region_admin_id = NULL
+                WHERE id = ? AND region_admin_id = ?
+                """,
+                (user["region_id"], user_id)
+            )
 
         connection.execute(
             """
@@ -1501,21 +1547,19 @@ def update_user_region(user_id):
             (region_id, user_id)
         )
 
-        if user["role"] == "regional_admin":
-
-            connection.execute(
-                """
-                UPDATE regions
-                SET region_admin_id = ?
-                WHERE id = ?
-                """,
-                (user_id, region_id)
-            )
+        connection.execute(
+            """
+            UPDATE regions
+            SET region_admin_id = ?
+            WHERE id = ?
+            """,
+            (user_id, region_id)
+        )
 
         connection.commit()
 
         flash(
-            "User region updated successfully.",
+            "Regional Admin region updated successfully.",
             "success"
         )
 
@@ -2464,4 +2508,3 @@ def file_too_large(error):
 if __name__ == "__main__":
 
     app.run(debug=False)
-    

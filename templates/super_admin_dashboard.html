@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -356,7 +355,7 @@
 
 
     <!-- ================================================= -->
-    <!-- CREATE REGIONAL ADMIN / WORKER -->
+    <!-- CREATE REGIONAL ADMIN ONLY -->
     <!-- ================================================= -->
 
     <div class="card section-card mt-4">
@@ -364,57 +363,40 @@
         <div class="card-body">
 
             <h4 class="section-title mb-3">
-                👥 Create Regional Admin / Worker
+                👥 Create Regional Admin
             </h4>
 
             <p class="text-muted">
-                Create accounts and assign them to their respective cities.
+                Create a Regional Admin account and assign the city they will manage.
+                Workers are created by their Regional Admin.
             </p>
 
-            <form
-                method="POST"
-                action="{{ url_for('create_user') }}">
+            <form method="POST" action="{{ url_for('create_user') }}">
 
                 <div class="row g-3">
 
                     <div class="col-md-4">
-
-                        <label class="form-label">
-                            Full Name
-                        </label>
-
+                        <label class="form-label">Full Name</label>
                         <input
                             type="text"
                             name="name"
                             class="form-control"
                             placeholder="Enter full name"
                             required>
-
                     </div>
 
-
                     <div class="col-md-4">
-
-                        <label class="form-label">
-                            Email Address
-                        </label>
-
+                        <label class="form-label">Email Address</label>
                         <input
                             type="email"
                             name="email"
                             class="form-control"
                             placeholder="Enter email address"
                             required>
-
                     </div>
 
-
                     <div class="col-md-4">
-
-                        <label class="form-label">
-                            Password
-                        </label>
-
+                        <label class="form-label">Password</label>
                         <input
                             type="password"
                             name="password"
@@ -422,79 +404,24 @@
                             minlength="8"
                             placeholder="Minimum 8 characters"
                             required>
-
                     </div>
 
-
                     <div class="col-md-6">
-
-                        <label class="form-label">
-                            Account Role
-                        </label>
-
-                        <select
-                            name="role"
-                            class="form-select"
-                            required>
-
-                            <option value="">
-                                Select Role
-                            </option>
-
-                            <option value="regional_admin">
-                                Regional Admin
-                            </option>
-
-                            <option value="worker">
-                                Worker
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="col-md-6">
-
-                        <label class="form-label">
-                            Assign City / Region
-                        </label>
-
-                        <select
-                            name="region_id"
-                            class="form-select"
-                            required>
-
-                            <option value="">
-                                Select City
-                            </option>
-
+                        <label class="form-label">Assign City / Region</label>
+                        <select name="region_id" class="form-select" required>
+                            <option value="">Select City</option>
                             {% for region in regions %}
-
                             <option value="{{ region['id'] }}">
-
-                                {{ region['city_name'] }},
-                                {{ region['state_name'] }}
-
+                                {{ region['city_name'] }}, {{ region['state_name'] }}
                             </option>
-
                             {% endfor %}
-
                         </select>
-
                     </div>
-
 
                     <div class="col-12">
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary">
-
-                            + Create Account
-
+                        <button type="submit" class="btn btn-primary">
+                            + Create Regional Admin
                         </button>
-
                     </div>
 
                 </div>
@@ -595,111 +522,6 @@
                         <tr>
                             <td colspan="5" class="text-center">
                                 No Regional Admin accounts created yet.
-                            </td>
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- ================================================= -->
-    <!-- WORKER MANAGEMENT -->
-    <!-- ================================================= -->
-
-    <div class="card section-card mt-4">
-
-        <div class="card-body">
-
-            <h4 class="section-title mb-3">
-                👷 Worker Management
-            </h4>
-
-            <div class="table-responsive">
-
-                <table class="table table-bordered table-striped management-table">
-
-                    <thead class="table-dark">
-
-                        <tr>
-                            <th>ID</th>
-                            <th>Worker Name</th>
-                            <th>Email</th>
-                            <th>Assigned City</th>
-                            <th>Change City</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {% for worker in workers %}
-
-                        <tr>
-
-                            <td>{{ worker['id'] }}</td>
-
-                            <td>{{ worker['name'] }}</td>
-
-                            <td>{{ worker['email'] }}</td>
-
-                            <td>
-                                {{ worker['city_name'] or 'Not Assigned' }}
-                            </td>
-
-                            <td>
-
-                                <form
-                                    method="POST"
-                                    action="{{ url_for('update_user_region', user_id=worker['id']) }}"
-                                    class="d-flex gap-2">
-
-                                    <select
-                                        name="region_id"
-                                        class="form-select form-select-sm"
-                                        required>
-
-                                        {% for region in regions %}
-
-                                        <option
-                                            value="{{ region['id'] }}"
-                                            {% if worker['region_id'] == region['id'] %}selected{% endif %}>
-
-                                            {{ region['city_name'] }}
-
-                                        </option>
-
-                                        {% endfor %}
-
-                                    </select>
-
-                                    <button
-                                        type="submit"
-                                        class="btn btn-sm btn-primary">
-
-                                        Update
-
-                                    </button>
-
-                                </form>
-
-                            </td>
-
-                        </tr>
-
-                        {% else %}
-
-                        <tr>
-                            <td colspan="5" class="text-center">
-                                No Worker accounts created yet.
                             </td>
                         </tr>
 
